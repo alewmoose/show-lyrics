@@ -21,7 +21,11 @@ for ($artist, $title) {
 }
 $title =~ s/[^a-z0-9]//g;
 
-my $fname = "$ENV{HOME}/.lyr/$artist-$title";
+my $cache_dir = "$ENV{HOME}/.lyr";
+unless (-d $cache_dir) {
+    mkdir $cache_dir or die "Failed to create $cache_dir: $!\n";
+}
+my $fname = "$cache_dir/$artist-$title";
 exec 'less', '-c', $fname if -f $fname;
 
 require Mojo::UserAgent;

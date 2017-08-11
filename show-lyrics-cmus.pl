@@ -6,6 +6,7 @@ use utf8;
 use subs qw(
     get_cmus_status
     parse_cmus_status
+    make_user_agent
 );
 
 # TODO:
@@ -43,9 +44,7 @@ my $fname = "$artist_dir/$title";
 exec 'less', '-c', $fname if -f $fname;
 
 require Mojo::UserAgent;
-my $ua = Mojo::UserAgent->new(
-	max_redirects => 5,
-);
+my $ua = make_user_agent;
 
 my $url = "http://www.azlyrics.com/lyrics/$artist/$title.html";
 my $tx = $ua->get($url);
@@ -77,3 +76,7 @@ sub parse_cmus_status {
         title  => $title,
     };
 }
+
+sub make_user_agent {
+    Mojo::UserAgent->new(max_redirects => 5);
+} 

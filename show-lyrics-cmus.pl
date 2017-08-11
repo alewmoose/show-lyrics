@@ -12,8 +12,6 @@ my ($title)  = $cmus_stat =~ /^tag\s+title\s+(.*)\s*$/mi;
 die "No artist/title\n" unless $artist && $title;
 my $pretty_title = "$artist - $title";
 
-say $pretty_title;
-
 $artist =~ s/\Athe //i;
 for ($artist, $title) {
     $_ = lc $_;

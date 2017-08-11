@@ -29,7 +29,6 @@ for ($artist, $title) {
     $_ = lc $_;
     s/[^a-z0-9]//g;
 }
-$title =~ s/[^a-z0-9]//g;
 
 my $cache_dir = "$ENV{HOME}/.lyrics";
 unless (-d $cache_dir) {

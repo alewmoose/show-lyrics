@@ -4,20 +4,23 @@ use strict;
 use warnings;
 use utf8;
 use subs qw(
-    get_cmus_stats
+    get_cmus_status
+    parse_cmus_status
 );
 
 # TODO:
 # remove tabs
 # use HTTP::Tiny
 # parse HTML with regexps :)
+# use pretty artist & title directory and file namse
 
-my ($status, $cmus_stat) = get_cmus_stats;
-exit $status if $status;
+my ($exit_status, $cmus_status) = get_cmus_status;
+exit $exit_status if $exit_status;
 
-my ($artist) = $cmus_stat =~ /^tag\s+artist\s+(.*)\s*$/mi;
-my ($title)  = $cmus_stat =~ /^tag\s+title\s+(.*)\s*$/mi;
-die "No artist/title\n" unless $artist && $title;
+my $song_info = parse_cmus_status $cmus_status;
+my $artist    = $song_info->{artist};
+my $title     = $song_info->{title};
+
 my $pretty_title = "$artist - $title";
 
 $artist =~ s/\Athe //i;
@@ -59,7 +62,18 @@ close $fh;
 
 exec 'less', '-c', $fname;
 
-sub get_cmus_stats {
-    my $cmus_stat = `cmus-remote -Q`;
-    ($? >> 8, $cmus_stat);
+sub get_cmus_status {
+    my $cmus_status = `cmus-remote -Q`;
+    return ($? >> 8, $cmus_status);
+}
+
+sub parse_cmus_status {
+    my ($cmus_status) = @_;
+    my ($artist) = $cmus_status =~ /^tag\s+artist\s+(.*)\s*$/mi;
+    my ($title)  = $cmus_status =~ /^tag\s+title\s+(.*)\s*$/mi;
+    die "Failed to parse cmus status" unless $artist && $title;
+    return {
+        artist => $artist,
+        title  => $title,
+    };
 }

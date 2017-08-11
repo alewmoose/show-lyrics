@@ -19,7 +19,7 @@ for ($artist, $title) {
 }
 $title =~ s/[^a-z0-9]//g;
 
-my $cache_dir = "$ENV{HOME}/.lyr";
+my $cache_dir = "$ENV{HOME}/.lyrics";
 unless (-d $cache_dir) {
     mkdir $cache_dir or die "Failed to create $cache_dir: $!\n";
 }

@@ -1,6 +1,8 @@
 #!/usr/bin/env perl
-use v5.24;
+use v5.10;
+use strict;
 use warnings;
+use utf8;
 
 my $cmus_stat = `cmus-remote -Q`;
 exit $? if $?;

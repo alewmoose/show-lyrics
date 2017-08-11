@@ -23,7 +23,12 @@ my $cache_dir = "$ENV{HOME}/.lyrics";
 unless (-d $cache_dir) {
     mkdir $cache_dir or die "Failed to create $cache_dir: $!\n";
 }
-my $fname = "$cache_dir/$artist-$title";
+my $artist_dir = "$cache_dir/$artist";
+unless (-d $artist_dir) {
+    mkdir $artist_dir or die "Failed to create $artist_dir: $!\n";
+}
+
+my $fname = "$artist_dir/$title";
 exec 'less', '-c', $fname if -f $fname;
 
 require Mojo::UserAgent;

@@ -5,7 +5,7 @@ use warnings;
 use utf8;
 
 my $cmus_stat = `cmus-remote -Q`;
-exit $? if $?;
+exit $? >> 8 if $?;
 
 my ($artist) = $cmus_stat =~ /^tag\s+artist\s+(.*)\s*$/mi;
 my ($title)  = $cmus_stat =~ /^tag\s+title\s+(.*)\s*$/mi;

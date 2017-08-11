@@ -1,0 +1,108 @@
+#!/usr/bin/env lua
+
+local http = require('socket.http')
+
+local show_song_info = true
+local wait_on_exit = false
+
+local function GetSongName()
+	local artist, song
+	if #arg == 0 then
+		--if no arguments passed then read mocp info
+		local mocp = io.popen("mocp -i")
+		local status = mocp:read("*a")
+		artist = string.match(status, ".*Artist: (.-)\n")
+		song   = string.match(status, ".*SongTitle: (.-)\n")
+		mocp:close()
+	elseif #arg == 1 then
+		--one argument passed, ex.: lyr "Led Zeppelin - Rock and Roll"
+		artist, song = string.match(arg[1], '(.*)-(.*)')
+		show_song_info = false
+	elseif #arg == 2 then
+		--two arguments, ex.: lyr blur ambulance
+		artist = arg[1]
+		song = arg[2]
+		show_song_info = false
+	elseif #arg >= 3 and arg[1] == "mocp" then
+		--two arguments from the moc player
+		artist = arg[2]
+		song = arg[3]
+		wait_on_exit = true
+	end
+
+	artist = artist ~= "" and artist or nil
+	song = song ~= "" and song or nil
+	return artist, song
+end
+
+local function ReadFromFile(filename)
+--	print("Reading from:", filename)
+	local file = io.open(filename, "r")
+	local lyr
+	if file then
+		lyr = file:read("*a")
+		file:close()
+	end
+	return lyr
+end
+
+local function DownloadLyrics(url)
+--	print("Downloading from:", url)
+	local lyrics
+	local html = http.request(url)
+	if html then
+		lyrics = string.match(html,
+			  ".*%<%!%-%- start of lyrics %-%-%>(.*)%<%!%-%- end of lyrics %-%-%>")
+		lyrics = lyrics and	string.gsub(lyrics, '%<br %/%>', '') or nil
+		lyrics = lyrics and string.gsub(lyrics, '%<%/?.-%>', '') or nil
+	end
+	return lyrics
+end
+
+local function WriteToFile(filename, lyrics)
+--	print("Writing to:", filename)
+	local file, err = io.open(filename, "w")
+	if file then
+		file:write(lyrics)
+		file:close()
+	else
+		print(err)
+	end
+end	
+
+local function GetLyrics(artist, song)
+	local a, s = string.gsub(artist, "[%s%p]", ""), string.gsub(song, "[%s%p]", "")
+	a, s = string.lower(a), string.lower(s)
+	local filename = os.getenv("HOME") .. "/.lyr/" .. a .. "-" .. s
+	local url = "http://azlyrics.com/lyrics/" .. a .. "/" .. s ..".html"
+	local lyrics = ReadFromFile(filename)
+	if not lyrics then
+		lyrics = DownloadLyrics(url)
+		if lyrics then WriteToFile(filename, lyrics) end
+	end
+	return lyrics
+end
+
+
+
+------------------ Start here ------------------
+
+local artist, song = GetSongName()
+if artist and song then
+	if show_song_info then
+		io.write(string.format("%s - %s\n", artist, song))
+	end
+
+	local lyrics = GetLyrics(artist, song)
+	if lyrics then print(lyrics)
+	else print("Not found")
+	end
+else
+	print("Error")
+end
+if wait_on_exit then
+	io.read()
+end
+
+
+

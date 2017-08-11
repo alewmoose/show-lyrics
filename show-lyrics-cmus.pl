@@ -3,9 +3,17 @@ use v5.10;
 use strict;
 use warnings;
 use utf8;
+use subs qw(
+    get_cmus_stats
+);
 
-my $cmus_stat = `cmus-remote -Q`;
-exit $? >> 8 if $?;
+# TODO:
+# remove tabs
+# use HTTP::Tiny
+# parse HTML with regexps :)
+
+my ($status, $cmus_stat) = get_cmus_stats;
+exit $status if $status;
 
 my ($artist) = $cmus_stat =~ /^tag\s+artist\s+(.*)\s*$/mi;
 my ($title)  = $cmus_stat =~ /^tag\s+title\s+(.*)\s*$/mi;
@@ -50,3 +58,8 @@ $fh->say($lyr);
 close $fh;
 
 exec 'less', '-c', $fname;
+
+sub get_cmus_stats {
+    my $cmus_stat = `cmus-remote -Q`;
+    ($? >> 8, $cmus_stat);
+}

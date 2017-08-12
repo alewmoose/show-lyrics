@@ -8,6 +8,9 @@ import (
 	"errors"
 	"bytes"
 	"net/http"
+	"golang.org/x/net/html/charset"
+	"io/ioutil"
+	// "syscall"
 )
 
 type songInfo struct {
@@ -34,8 +37,12 @@ func main() {
 
 	fmt.Println(songinfo)
 
-	lyrics := fetchLyrics(client, songinfo)
-	fmt.Println(lyrics)
+	lyrics, err := fetchLyrics(client, songinfo)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(string(lyrics))
 }
 
 func getCmusStatus() ([]byte, error) {
@@ -82,20 +89,49 @@ func makeURL(si *songInfo) string {
 	artist = bytes.ToLower(artist)
 	title = bytes.ToLower(title)
 
-	for _, str := range [][]byte{artist,title} {
-		str = bytes.ToLower(str)
-		str = weirdRe.ReplaceAll(str, []byte{})
+	for _, str := range []*[]byte{&artist, &title} {
+		*str = bytes.ToLower(*str)
+		*str = weirdRe.ReplaceAll(*str, []byte{})
 	}
 
-	fmt.Println(string(artist))
-	fmt.Println(string(title))
+	url := "http://www.azlyrics.com/lyrics/"
+	url += string(artist) + "/" + string(title) + ".html";
 
-	return ""
+	return url
 }
 
-func fetchLyrics (client *http.Client, si *songInfo) []byte {
-	url := makeURL(si)
-	_ = url
+func fetchLyrics (client *http.Client, si *songInfo) ([]byte, error) {
+	reqUrl := makeURL(si)
 
-	return []byte{}
+	req, err := http.NewRequest("GET", reqUrl, nil)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	if resp.StatusCode != 200 {
+		return []byte{}, errors.New(resp.Status)
+	}
+
+	utf8, err := charset.NewReader(resp.Body, resp.Header.Get("Content-Type"))
+	if err != nil {
+		return []byte{}, err
+	}
+	body, err := ioutil.ReadAll(utf8)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	lyrics := parseLyrics(body)
+
+	return lyrics, nil
 }
+
+func parseLyrics(lyricsHtml []byte) []byte {
+	return lyricsHtml
+}
+

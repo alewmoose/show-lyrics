@@ -67,11 +67,11 @@ func main() {
 }
 
 func prepareLyrics(si *songInfo, lyrics []byte) []byte {
-	title := prettyTitle(si)
+	title := si.prettyTitle()
 	return []byte(title + "\n\n" + string(lyrics) + "\n")
 }
 
-func prettyTitle(si *songInfo) string {
+func (si *songInfo) prettyTitle() string {
 	return si.artist + " - " + si.title
 }
 

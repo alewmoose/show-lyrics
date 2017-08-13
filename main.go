@@ -1,15 +1,15 @@
 package main
 
 import (
-	"fmt"
-	"os/exec"
-	"log"
-	"regexp"
-	"errors"
 	"bytes"
-	"net/http"
+	"errors"
+	"fmt"
 	"golang.org/x/net/html/charset"
 	"io/ioutil"
+	"log"
+	"net/http"
+	"os/exec"
+	"regexp"
 	// "syscall"
 )
 
@@ -34,8 +34,6 @@ func main() {
 	}
 
 	client := &http.Client{}
-
-	fmt.Println(songinfo)
 
 	lyrics, err := fetchLyrics(client, songinfo)
 	if err != nil {
@@ -69,9 +67,9 @@ func parseCmusStatus(cmusStatus []byte) (*songInfo, error) {
 		return nil, errors.New("Failed to parse cmus status")
 	}
 
-	si := songInfo {
+	si := songInfo{
 		artist: string(artist),
-		title: string(title),
+		title:  string(title),
 	}
 
 	return &si, nil
@@ -95,12 +93,12 @@ func makeURL(si *songInfo) string {
 	}
 
 	url := "https://www.azlyrics.com/lyrics/"
-	url += string(artist) + "/" + string(title) + ".html";
+	url += string(artist) + "/" + string(title) + ".html"
 
 	return url
 }
 
-func fetchLyrics (client *http.Client, si *songInfo) ([]byte, error) {
+func fetchLyrics(client *http.Client, si *songInfo) ([]byte, error) {
 	reqUrl := makeURL(si)
 
 	req, err := http.NewRequest("GET", reqUrl, nil)
@@ -149,10 +147,10 @@ func htmlStrip(html []byte) []byte {
 
 func parseLyrics(lyricsHtml []byte) ([]byte, error) {
 	re := regexp.MustCompile(
-	`(?s)<div[^<>]*?class="lyricsh"[^<>]*?>.*?</div>\s*?` +
-	`<div[^<>]*?>.*?</div>\s*` +
-	`.*?` +
-	`<div[^<>]*?>(.*?)</div>`)
+		`(?s)<div[^<>]*?class="lyricsh"[^<>]*?>.*?</div>\s*?` +
+			`<div[^<>]*?>.*?</div>\s*` +
+			`.*?` +
+			`<div[^<>]*?>(.*?)</div>`)
 
 	match := re.FindAllSubmatch(lyricsHtml, 1)
 	if match == nil {
@@ -162,4 +160,3 @@ func parseLyrics(lyricsHtml []byte) ([]byte, error) {
 	lyrics := htmlStrip(match[0][1])
 	return lyrics, nil
 }
-

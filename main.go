@@ -18,6 +18,8 @@ type songInfo struct {
 	artist, title string
 }
 
+// TODO: probably should use string instead of []byte everywhere
+
 func main() {
 	home := os.Getenv("HOME")
 	if home == "" {
@@ -51,8 +53,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// TODO: add pretty title
-	// TODO: add newline
+	lyrics = prepareLyrics(songinfo, lyrics)
 
 	err = ioutil.WriteFile(songFile, lyrics, 0644)
 	if err != nil {
@@ -65,12 +66,21 @@ func main() {
 	}
 }
 
+func prepareLyrics(si *songInfo, lyrics []byte) []byte {
+	title := prettyTitle(si)
+	return []byte(title + "\n\n" + string(lyrics) + "\n")
+}
+
+func prettyTitle(si *songInfo) string {
+	return si.artist + " - " + si.title
+}
+
 func execLess(file string) error {
 	lessBin, err := exec.LookPath("less")
 	if err != nil {
 		return err
 	}
-	err = syscall.Exec(lessBin, []string{"-c", file}, os.Environ())
+	err = syscall.Exec(lessBin, []string{"less", "-c", file}, os.Environ())
 	if err != nil {
 		return err
 	}

@@ -126,12 +126,40 @@ func fetchLyrics (client *http.Client, si *songInfo) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	lyrics := parseLyrics(body)
+	lyrics, err := parseLyrics(body)
+	if err != nil {
+		return []byte{}, err
+	}
 
 	return lyrics, nil
 }
 
-func parseLyrics(lyricsHtml []byte) []byte {
-	return lyricsHtml
+func htmlStrip(html []byte) []byte {
+	commentsRe := regexp.MustCompile(`(?s)<!--.*?-->`)
+	brRe := regexp.MustCompile(`<br/?>`)
+
+	html = commentsRe.ReplaceAll(html, []byte{})
+	html = brRe.ReplaceAll(html, []byte{})
+
+	// TODO
+	// trim leading|trainling whitespace for every line
+
+	return html
+}
+
+func parseLyrics(lyricsHtml []byte) ([]byte, error) {
+	re := regexp.MustCompile(
+	`(?s)<div[^<>]*?class="lyricsh"[^<>]*?>.*?</div>\s*?` +
+	`<div[^<>]*?>.*?</div>\s*` +
+	`.*?` +
+	`<div[^<>]*?>(.*?)</div>`)
+
+	match := re.FindAllSubmatch(lyricsHtml, 1)
+	if match == nil {
+		return []byte{}, errors.New("Failed to parse html")
+	}
+
+	lyrics := htmlStrip(match[0][1])
+	return lyrics, nil
 }
 

@@ -45,7 +45,7 @@ exec 'less', '-c', $fname if -f $fname;
 require Mojo::UserAgent;
 my $ua = make_user_agent;
 
-my $url = "http://www.azlyrics.com/lyrics/$artist/$title.html";
+my $url = "https://www.azlyrics.com/lyrics/$artist/$title.html";
 my $tx = $ua->get($url);
 die $tx->error->{message}, "\n" if $tx->error;
 

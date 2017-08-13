@@ -94,7 +94,7 @@ func makeURL(si *songInfo) string {
 		*str = weirdRe.ReplaceAll(*str, []byte{})
 	}
 
-	url := "http://www.azlyrics.com/lyrics/"
+	url := "https://www.azlyrics.com/lyrics/"
 	url += string(artist) + "/" + string(title) + ".html";
 
 	return url

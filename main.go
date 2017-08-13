@@ -39,6 +39,14 @@ func main() {
 	cacheArtistDir := path.Join(cacheDir, songinfo.artist)
 	songFile := path.Join(cacheArtistDir, songinfo.title + ".txt")
 
+	_, err = os.Stat(songFile)
+	if err == nil {
+		err := execLess(songFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	for _, dir := range []string{dotDir, cacheDir, cacheArtistDir} {
 		err := mkdirUnlessExists(dir)
 		if err != nil {

@@ -24,24 +24,24 @@ func main() {
 		log.Fatal("HOME not found")
 	}
 
+	songinfo, err := getSongInfo()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+
+	// TODO
+	// artist and title can contain slashes
 	dotDir := path.Join(home, ".show-lyrics")
 	cacheDir := path.Join(dotDir, "cache")
+	cacheArtistDir := path.Join(cacheDir, songinfo.artist)
+	songFile := path.Join(cacheArtistDir, songinfo.title + ".txt")
 
-	for _, dir := range []string{dotDir, cacheDir} {
+	for _, dir := range []string{dotDir, cacheDir, cacheArtistDir} {
 		err := mkdirUnlessExists(dir)
 		if err != nil {
 			log.Fatal(err)
 		}
-	}
-
-	cmusStatus, err := getCmusStatus()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	songinfo, err := parseCmusStatus(cmusStatus)
-	if err != nil {
-		log.Fatal(err)
 	}
 
 	client := &http.Client{}
@@ -51,7 +51,24 @@ func main() {
 		log.Fatal(err)
 	}
 
+	err = ioutil.WriteFile(songFile, lyrics, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println(string(lyrics))
+}
+
+func getSongInfo() (*songInfo, error) {
+	cmusStatus, err := getCmusStatus()
+	if err != nil {
+		return nil, err
+	}
+	songinfo, err := parseCmusStatus(cmusStatus)
+	if err != nil {
+		return nil, err
+	}
+	return songinfo, nil
 }
 
 func mkdirUnlessExists(dir string) error {

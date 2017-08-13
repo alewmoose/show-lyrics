@@ -177,9 +177,7 @@ func htmlStrip(html []byte) []byte {
 
 	html = commentsRe.ReplaceAll(html, []byte{})
 	html = brRe.ReplaceAll(html, []byte{})
-
-	// TODO
-	// trim leading|trainling whitespace for every line
+	html = bytes.TrimSpace(html)
 
 	return html
 }

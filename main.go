@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"golang.org/x/net/html/charset"
 	"io/ioutil"
 	"log"
@@ -12,6 +11,7 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
+	"syscall"
 )
 
 type songInfo struct {
@@ -51,12 +51,22 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// TODO: add pretty title
+	// TODO: add newline
+
 	err = ioutil.WriteFile(songFile, lyrics, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(string(lyrics))
+	lessBin, err := exec.LookPath("less")
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = syscall.Exec(lessBin, []string{"-c", songFile}, os.Environ())
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func getSongInfo() (*songInfo, error) {

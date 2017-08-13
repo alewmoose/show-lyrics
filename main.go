@@ -59,14 +59,22 @@ func main() {
 		log.Fatal(err)
 	}
 
+	err = execLess(songFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func execLess(file string) error {
 	lessBin, err := exec.LookPath("less")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	err = syscall.Exec(lessBin, []string{"-c", songFile}, os.Environ())
+	err = syscall.Exec(lessBin, []string{"-c", file}, os.Environ())
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return nil
 }
 
 func getSongInfo() (*songInfo, error) {

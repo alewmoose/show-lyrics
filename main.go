@@ -8,9 +8,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
+	"path"
 	"regexp"
-	// "syscall"
 )
 
 type songInfo struct {
@@ -18,10 +19,20 @@ type songInfo struct {
 }
 
 func main() {
-	// TODO
-	// exit status
-	// strings vs bytes slices
-	// http client : what are default settings?
+	home := os.Getenv("HOME")
+	if home == "" {
+		log.Fatal("HOME not found")
+	}
+
+	dotDir := path.Join(home, ".show-lyrics")
+	cacheDir := path.Join(dotDir, "cache")
+
+	for _, dir := range []string{dotDir, cacheDir} {
+		err := mkdirUnlessExists(dir)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	cmusStatus, err := getCmusStatus()
 	if err != nil {
@@ -41,6 +52,17 @@ func main() {
 	}
 
 	fmt.Println(string(lyrics))
+}
+
+func mkdirUnlessExists(dir string) error {
+	_, err := os.Stat(dir)
+	if err != nil {
+		err = os.Mkdir(dir, 0755)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func getCmusStatus() ([]byte, error) {

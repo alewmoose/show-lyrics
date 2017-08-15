@@ -11,14 +11,13 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
+	"strings"
 	"syscall"
 )
 
 type songInfo struct {
 	artist, title string
 }
-
-// TODO: probably should use string instead of []byte everywhere
 
 func main() {
 	home := os.Getenv("HOME")
@@ -31,13 +30,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	artistP := replaceSlashes(songinfo.artist)
+	titleP := replaceSlashes(songinfo.title)
 
-	// TODO
-	// artist and title can contain slashes
 	dotDir := path.Join(home, ".show-lyrics")
 	cacheDir := path.Join(dotDir, "cache")
-	cacheArtistDir := path.Join(cacheDir, songinfo.artist)
-	songFile := path.Join(cacheArtistDir, songinfo.title + ".txt")
+	cacheArtistDir := path.Join(cacheDir, artistP)
+	songFile := path.Join(cacheArtistDir, titleP+".txt")
 
 	_, err = os.Stat(songFile)
 	if err == nil {
@@ -81,6 +80,10 @@ func prepareLyrics(si *songInfo, lyrics []byte) []byte {
 
 func (si *songInfo) prettyTitle() string {
 	return si.artist + " - " + si.title
+}
+
+func replaceSlashes(s string) string {
+	return strings.Replace(s, "/", "_", -1)
 }
 
 func execLess(file string) error {

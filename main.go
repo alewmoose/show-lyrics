@@ -194,9 +194,11 @@ func fetchLyrics(client *http.Client, si *songInfo) ([]byte, error) {
 	}
 
 	utf8, err := charset.NewReader(resp.Body, resp.Header.Get("Content-Type"))
+	defer resp.Body.Close()
 	if err != nil {
 		return []byte{}, err
 	}
+
 	body, err := ioutil.ReadAll(utf8)
 	if err != nil {
 		return []byte{}, err

@@ -215,9 +215,11 @@ func fetchLyrics(client *http.Client, si *songInfo) ([]byte, error) {
 func htmlStrip(html []byte) []byte {
 	commentsRe := regexp.MustCompile(`(?s)<!--.*?-->`)
 	brRe := regexp.MustCompile(`<br/?>`)
+	tagsRe := regexp.MustCompile(`<[^<>]+>`)
 
 	html = commentsRe.ReplaceAll(html, []byte{})
 	html = brRe.ReplaceAll(html, []byte{})
+	html = tagsRe.ReplaceAll(html, []byte{})
 	html = bytes.TrimSpace(html)
 
 	return html

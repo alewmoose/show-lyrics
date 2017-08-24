@@ -8,18 +8,18 @@ import (
 )
 
 func GetSongInfo() (*songinfo.SongInfo, error) {
-	cmusStatus, err := getCmusStatus()
+	stats, err := getStats()
 	if err != nil {
 		return nil, err
 	}
-	Songinfo, err := parseCmusStatus(cmusStatus)
+	Songinfo, err := parseStats(stats)
 	if err != nil {
 		return nil, err
 	}
 	return Songinfo, nil
 }
 
-func getCmusStatus() ([]byte, error) {
+func getStats() ([]byte, error) {
 	cmd := exec.Command("cmus-remote", "-Q")
 	return cmd.Output()
 }
@@ -35,9 +35,9 @@ func regexpMatch(re *regexp.Regexp, buf []byte) []byte {
 	return nil
 }
 
-func parseCmusStatus(cmusStatus []byte) (*songinfo.SongInfo, error) {
-	artist := regexpMatch(artistRe, cmusStatus)
-	title := regexpMatch(titleRe, cmusStatus)
+func parseStats(stats []byte) (*songinfo.SongInfo, error) {
+	artist := regexpMatch(artistRe, stats)
+	title := regexpMatch(titleRe, stats)
 
 	if artist == nil || title == nil {
 		return nil, errors.New("Failed to parse cmus status")

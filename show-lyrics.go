@@ -20,13 +20,13 @@ func main() {
 		log.Fatal("HOME not found")
 	}
 
-	Songinfo, err := cmus.GetSongInfo()
+	songinfo, err := cmus.GetSongInfo()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	artistP := replaceSlashes(Songinfo.Artist)
-	titleP := replaceSlashes(Songinfo.Title)
+	artistP := replaceSlashes(songinfo.Artist)
+	titleP := replaceSlashes(songinfo.Title)
 
 	dotDir := path.Join(home, ".show-lyrics")
 	cacheDir := path.Join(dotDir, "cache")
@@ -50,12 +50,12 @@ func main() {
 
 	client := &http.Client{}
 
-	lyrics, err := azlyrics.Fetch(client, Songinfo)
+	lyrics, err := azlyrics.Fetch(client, songinfo)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	lyrics = prepareLyrics(Songinfo, lyrics)
+	lyrics = prepareLyrics(songinfo, lyrics)
 
 	err = ioutil.WriteFile(songFile, lyrics, 0644)
 	if err != nil {

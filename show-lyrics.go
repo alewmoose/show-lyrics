@@ -1,8 +1,9 @@
 package main
 
 import (
+	"errors"
 	"github.com/alewmoose/show-lyrics/fetcher/azlyrics"
-	_ "github.com/alewmoose/show-lyrics/player/cmus"
+	"github.com/alewmoose/show-lyrics/player/cmus"
 	"github.com/alewmoose/show-lyrics/player/mocp"
 	"github.com/alewmoose/show-lyrics/songinfo"
 	"io/ioutil"
@@ -21,7 +22,7 @@ func main() {
 		log.Fatal("HOME not found")
 	}
 
-	songinfo, err := mocp.GetSongInfo()
+	songinfo, err := getSongInfo()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,6 +68,24 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func getSongInfo() (*songinfo.SongInfo, error) {
+	type songInfoResult struct {
+		songinfo *songinfo.SongInfo
+		err error
+	}
+
+	cmusSi, cmusErr := cmus.GetSongInfo()
+	mocpSi, mocpErr := mocp.GetSongInfo()
+
+	if cmusErr != nil && mocpErr != nil {
+		return nil, errors.New("No players running")
+	}
+	if mocpErr != nil {
+		return cmusSi, nil
+	}
+	return mocpSi, nil
 }
 
 func prepareLyrics(si *songinfo.SongInfo, lyrics []byte) []byte {

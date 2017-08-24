@@ -7,4 +7,3 @@ type SongInfo struct {
 func (si *SongInfo) PrettyTitle() string {
 	return si.Artist + " - " + si.Title
 }
-

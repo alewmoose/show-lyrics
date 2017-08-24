@@ -3,9 +3,9 @@ package azlyrics
 import (
 	"bytes"
 	"errors"
+	"github.com/alewmoose/show-lyrics/songinfo"
 	"golang.org/x/net/html/charset"
 	"io/ioutil"
-	"github.com/alewmoose/show-lyrics/songinfo"
 	"net/http"
 	"regexp"
 )
@@ -68,7 +68,6 @@ func makeURL(si *songinfo.SongInfo) string {
 
 	return url
 }
-
 
 func htmlStrip(html []byte) []byte {
 	commentsRe := regexp.MustCompile(`(?s)<!--.*?-->`)

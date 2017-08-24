@@ -1,6 +1,9 @@
 package main
 
 import (
+	"github.com/alewmoose/show-lyrics/fetcher/azlyrics"
+	"github.com/alewmoose/show-lyrics/player/cmus"
+	"github.com/alewmoose/show-lyrics/songinfo"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -9,9 +12,6 @@ import (
 	"path"
 	"strings"
 	"syscall"
-	"github.com/alewmoose/show-lyrics/fetcher/azlyrics"
-	"github.com/alewmoose/show-lyrics/songinfo"
-	"github.com/alewmoose/show-lyrics/player/cmus"
 )
 
 func main() {
@@ -89,7 +89,6 @@ func execLess(file string) error {
 	return nil
 }
 
-
 func mkdirUnlessExists(dir string) error {
 	_, err := os.Stat(dir)
 	if err != nil {
@@ -100,4 +99,3 @@ func mkdirUnlessExists(dir string) error {
 	}
 	return nil
 }
-

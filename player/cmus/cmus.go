@@ -1,10 +1,10 @@
 package cmus
 
 import (
-	"regexp"
 	"errors"
-	"os/exec"
 	"github.com/alewmoose/show-lyrics/songinfo"
+	"os/exec"
+	"regexp"
 )
 
 func GetSongInfo() (*songinfo.SongInfo, error) {

@@ -2,7 +2,8 @@ package main
 
 import (
 	"github.com/alewmoose/show-lyrics/fetcher/azlyrics"
-	"github.com/alewmoose/show-lyrics/player/cmus"
+	_ "github.com/alewmoose/show-lyrics/player/cmus"
+	"github.com/alewmoose/show-lyrics/player/mocp"
 	"github.com/alewmoose/show-lyrics/songinfo"
 	"io/ioutil"
 	"log"
@@ -20,7 +21,7 @@ func main() {
 		log.Fatal("HOME not found")
 	}
 
-	songinfo, err := cmus.GetSongInfo()
+	songinfo, err := mocp.GetSongInfo()
 	if err != nil {
 		log.Fatal(err)
 	}

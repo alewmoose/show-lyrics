@@ -19,6 +19,7 @@ func GetSongInfo() (*songinfo.SongInfo, error) {
 	return Songinfo, nil
 }
 
+// TODO: error
 func getStats() ([]byte, error) {
 	cmd := exec.Command("cmus-remote", "-Q")
 	return cmd.Output()

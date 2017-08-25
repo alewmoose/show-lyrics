@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/alewmoose/show-lyrics/songinfo"
 	"golang.org/x/net/html/charset"
+	"html"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -69,17 +70,18 @@ func makeURL(si *songinfo.SongInfo) string {
 	return url
 }
 
-func htmlStrip(html []byte) []byte {
+func htmlStrip(h []byte) []byte {
 	commentsRe := regexp.MustCompile(`(?s)<!--.*?-->`)
 	brRe := regexp.MustCompile(`<br/?>`)
 	tagsRe := regexp.MustCompile(`<[^<>]+>`)
 
-	html = commentsRe.ReplaceAll(html, []byte{})
-	html = brRe.ReplaceAll(html, []byte{})
-	html = tagsRe.ReplaceAll(html, []byte{})
-	html = bytes.TrimSpace(html)
+	h = commentsRe.ReplaceAll(h, []byte{})
+	h = brRe.ReplaceAll(h, []byte{})
+	h = tagsRe.ReplaceAll(h, []byte{})
+	h = bytes.TrimSpace(h)
+	h = []byte(html.UnescapeString(string(h)))
 
-	return html
+	return h
 }
 
 func parseLyrics(lyricsHtml []byte) ([]byte, error) {

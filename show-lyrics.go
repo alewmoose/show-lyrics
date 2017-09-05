@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"strings"
 	"syscall"
 )
@@ -52,7 +53,7 @@ func main() {
 
 	client := &http.Client{}
 
-	lyrics, err := azlyrics.Fetch(client, songinfo)
+	lyrics, err := fetchLyrics(client, songinfo)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,10 +71,31 @@ func main() {
 	}
 }
 
+var parensRe = regexp.MustCompile(`\(.+\)$`)
+
+func fetchLyrics(c *http.Client, si *songinfo.SongInfo) ([]byte, error) {
+	lyrics, err := azlyrics.Fetch(c, si)
+	if err == nil {
+		return lyrics, err
+	}
+	if err.Error() != "404 Not Found" {
+		return lyrics, err
+	}
+	if parensRe.MatchString(si.Title) == false {
+		return lyrics, err
+	}
+	title := parensRe.ReplaceAllString(si.Title, "")
+	if len(title) == 0 {
+		return lyrics, err
+	}
+	newSi := songinfo.SongInfo{Artist: si.Artist, Title: title}
+	return fetchLyrics(c, &newSi)
+}
+
 func getSongInfo() (*songinfo.SongInfo, error) {
 	type songInfoResult struct {
 		songinfo *songinfo.SongInfo
-		err error
+		err      error
 	}
 
 	cmusSi, cmusErr := cmus.GetSongInfo()

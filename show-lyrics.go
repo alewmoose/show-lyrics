@@ -2,18 +2,17 @@ package main
 
 import (
 	"errors"
+	"github.com/alewmoose/show-lyrics/cache"
 	"github.com/alewmoose/show-lyrics/fetcher/azlyrics"
 	"github.com/alewmoose/show-lyrics/player/cmus"
 	"github.com/alewmoose/show-lyrics/player/mocp"
 	"github.com/alewmoose/show-lyrics/songinfo"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"path"
 	"regexp"
-	"strings"
 	"syscall"
 )
 
@@ -28,24 +27,20 @@ func main() {
 		log.Fatal(err)
 	}
 
-	artistP := replaceSlashes(songinfo.Artist)
-	titleP := replaceSlashes(songinfo.Title)
-
 	dotDir := path.Join(home, ".show-lyrics")
 	cacheDir := path.Join(dotDir, "cache")
-	cacheArtistDir := path.Join(cacheDir, artistP)
-	songFile := path.Join(cacheArtistDir, titleP+".txt")
 
-	_, err = os.Stat(songFile)
-	if err == nil {
-		err := execLess(songFile)
+	for _, dir := range []string{dotDir, cacheDir} {
+		err := mkdirUnlessExists(dir)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
-	for _, dir := range []string{dotDir, cacheDir, cacheArtistDir} {
-		err := mkdirUnlessExists(dir)
+	lyricsCache := cache.New(cacheDir, songinfo)
+
+	if lyricsCache.Exists() {
+		err := execLess(lyricsCache.FilePath())
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -60,12 +55,12 @@ func main() {
 
 	lyrics = prepareLyrics(songinfo, lyrics)
 
-	err = ioutil.WriteFile(songFile, lyrics, 0644)
+	err = lyricsCache.Store(lyrics)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = execLess(songFile)
+	err = execLess(lyricsCache.FilePath())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -113,10 +108,6 @@ func getSongInfo() (*songinfo.SongInfo, error) {
 func prepareLyrics(si *songinfo.SongInfo, lyrics []byte) []byte {
 	title := si.PrettyTitle()
 	return []byte(title + "\n\n" + string(lyrics) + "\n")
-}
-
-func replaceSlashes(s string) string {
-	return strings.Replace(s, "/", "_", -1)
 }
 
 func execLess(file string) error {

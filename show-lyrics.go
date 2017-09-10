@@ -14,17 +14,13 @@ import (
 	"path"
 	"regexp"
 	"syscall"
+	"time"
 )
 
 func main() {
 	home := os.Getenv("HOME")
 	if home == "" {
 		log.Fatal("HOME not found")
-	}
-
-	songinfo, err := getSongInfo()
-	if err != nil {
-		log.Fatal(err)
 	}
 
 	dotDir := path.Join(home, ".show-lyrics")
@@ -37,32 +33,66 @@ func main() {
 		}
 	}
 
-	lyricsCache := cache.New(cacheDir, songinfo)
-
-	if lyricsCache.Exists() {
-		err := execLess(lyricsCache.FilePath())
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
 	client := &http.Client{}
 
-	lyrics, err := fetchLyrics(client, songinfo)
+	err := mainLoop(client, cacheDir)
 	if err != nil {
 		log.Fatal(err)
 	}
+}
 
-	lyrics = prepareLyrics(songinfo, lyrics)
+func mainLoop(client *http.Client, cacheDir string) error {
+	var prevSongInfo songinfo.SongInfo
+	var cmd *exec.Cmd
+	for ; ; time.Sleep(5 * time.Second) {
+		log.Println("main loop")
+		songinfo, err := getSongInfo()
+		if err != nil {
+			return err
+		}
+		if *songinfo == prevSongInfo {
+			continue
+		}
+		prevSongInfo = *songinfo
 
-	err = lyricsCache.Store(lyrics)
-	if err != nil {
-		log.Fatal(err)
-	}
+		lyricsCache := cache.New(cacheDir, songinfo)
+		if !lyricsCache.Exists() {
+			lyrics, err := fetchLyrics(client, songinfo)
+			if err != nil {
+				return err
+			}
+			lyrics = prepareLyrics(songinfo, lyrics)
+			err = lyricsCache.Store(lyrics)
+			if err != nil {
+				return err
+			}
+		}
 
-	err = execLess(lyricsCache.FilePath())
-	if err != nil {
-		log.Fatal(err)
+		if cmd != nil {
+			log.Println("cmd != nil")
+			sigErr := cmd.Process.Signal(syscall.SIGTERM)
+			if sigErr != nil {
+				return sigErr
+			}
+			processState, waitErr := cmd.Process.Wait()
+			if processState.Exited() {
+				return nil
+			}
+			if waitErr != nil {
+				return waitErr
+			}
+		} else {
+			log.Println("cmd == nil")
+		}
+		cmd = exec.Command("less", "-c", lyricsCache.FilePath())
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		startErr := cmd.Start()
+		if startErr != nil {
+			return startErr
+		}
 	}
 }
 
@@ -108,18 +138,6 @@ func getSongInfo() (*songinfo.SongInfo, error) {
 func prepareLyrics(si *songinfo.SongInfo, lyrics []byte) []byte {
 	title := si.PrettyTitle()
 	return []byte(title + "\n\n" + string(lyrics) + "\n")
-}
-
-func execLess(file string) error {
-	lessBin, err := exec.LookPath("less")
-	if err != nil {
-		return err
-	}
-	err = syscall.Exec(lessBin, []string{"less", "-c", file}, os.Environ())
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func mkdirUnlessExists(dir string) error {

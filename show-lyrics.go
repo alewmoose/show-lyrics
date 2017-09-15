@@ -45,7 +45,6 @@ func mainLoop(client *http.Client, cacheDir string) error {
 	var prevSongInfo songinfo.SongInfo
 	var cmd *exec.Cmd
 	for ; ; time.Sleep(5 * time.Second) {
-		log.Println("main loop")
 		songinfo, err := getSongInfo()
 		if err != nil {
 			return err
@@ -69,7 +68,6 @@ func mainLoop(client *http.Client, cacheDir string) error {
 		}
 
 		if cmd != nil {
-			log.Println("cmd != nil")
 			sigErr := cmd.Process.Signal(syscall.SIGTERM)
 			if sigErr != nil {
 				return sigErr
@@ -81,8 +79,6 @@ func mainLoop(client *http.Client, cacheDir string) error {
 			if waitErr != nil {
 				return waitErr
 			}
-		} else {
-			log.Println("cmd == nil")
 		}
 		cmd = exec.Command("less", "-c", lyricsCache.FilePath())
 		cmd.Stdin = os.Stdin

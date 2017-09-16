@@ -114,11 +114,6 @@ func fetchLyrics(c *http.Client, si *songinfo.SongInfo) ([]byte, error) {
 }
 
 func getSongInfo() (*songinfo.SongInfo, error) {
-	type songInfoResult struct {
-		songinfo *songinfo.SongInfo
-		err      error
-	}
-
 	cmusSi, cmusErr := cmus.GetSongInfo()
 	mocpSi, mocpErr := mocp.GetSongInfo()
 

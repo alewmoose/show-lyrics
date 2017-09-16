@@ -26,6 +26,7 @@ func getStats() ([]byte, error) {
 }
 
 var artistRe = regexp.MustCompile(`(?m)^tag\s+artist\s+(.+)\s*$`)
+var albumArtistRe = regexp.MustCompile(`(?m)^tag\s+albumartist\s+(.+)\s*$`)
 var titleRe = regexp.MustCompile(`(?m)^tag\s+title\s+(.+)\s*$`)
 
 func regexpMatch(re *regexp.Regexp, buf []byte) []byte {
@@ -38,6 +39,9 @@ func regexpMatch(re *regexp.Regexp, buf []byte) []byte {
 
 func parseStats(stats []byte) (*songinfo.SongInfo, error) {
 	artist := regexpMatch(artistRe, stats)
+	if artist == nil {
+		artist = regexpMatch(albumArtistRe, stats)
+	}
 	title := regexpMatch(titleRe, stats)
 
 	if artist == nil || title == nil {

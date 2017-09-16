@@ -113,17 +113,24 @@ func fetchLyrics(c *http.Client, si *songinfo.SongInfo) ([]byte, error) {
 	return fetchLyrics(c, &newSi)
 }
 
-func getSongInfo() (*songinfo.SongInfo, error) {
-	cmusSi, cmusErr := cmus.GetSongInfo()
-	mocpSi, mocpErr := mocp.GetSongInfo()
+var SIGetters = [...]func() (*songinfo.SongInfo, error){
+	cmus.GetSongInfo,
+	mocp.GetSongInfo,
+}
 
-	if cmusErr != nil && mocpErr != nil {
-		return nil, errors.New("No players running")
+func getSongInfo() (*songinfo.SongInfo, error) {
+	for i, getSI := range SIGetters {
+		si, err := getSI()
+		if err != nil {
+			continue
+		}
+		if i != 0 {
+			// next time try the active player first
+			SIGetters[0], SIGetters[i] = SIGetters[i], SIGetters[0]
+		}
+		return si, nil
 	}
-	if mocpErr != nil {
-		return cmusSi, nil
-	}
-	return mocpSi, nil
+	return nil, errors.New("No players running")
 }
 
 func prepareLyrics(si *songinfo.SongInfo, lyrics []byte) []byte {

@@ -42,54 +42,103 @@ func main() {
 }
 
 func mainLoop(client *http.Client, cacheDir string) error {
-	var prevSongInfo songinfo.SongInfo
-	var cmd *exec.Cmd
-	for ; ; time.Sleep(5 * time.Second) {
-		songinfo, err := getSongInfo()
-		if err != nil {
-			return err
-		}
-		if *songinfo == prevSongInfo {
-			continue
-		}
-		prevSongInfo = *songinfo
+	songInfo, err := getSongInfo()
+	if err != nil {
+		return err
+	}
 
-		lyricsCache := cache.New(cacheDir, songinfo)
-		if !lyricsCache.Exists() {
-			lyrics, err := fetchLyrics(client, songinfo)
+	filePath, err := saveLyrics(client, cacheDir, songInfo)
+	if err != nil {
+		return err
+	}
+
+	cmdErr := make(chan error)
+	defer close(cmdErr)
+	cmd, err := startLess(filePath)
+	if err != nil {
+		return err
+	}
+	go waitCmd(cmd, cmdErr)
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+	prevSongInfo := *songInfo
+
+LOOP:
+	for {
+		select {
+		case <-ticker.C:
+			songInfo, err = getSongInfo()
 			if err != nil {
-				return err
+				break LOOP
 			}
-			lyrics = prepareLyrics(songinfo, lyrics)
-			err = lyricsCache.Store(lyrics)
+			if *songInfo == prevSongInfo {
+				continue
+			}
+			prevSongInfo = *songInfo
+			filePath, err = saveLyrics(client, cacheDir, songInfo)
 			if err != nil {
-				return err
+				break LOOP
 			}
-		}
-
-		if cmd != nil {
-			sigErr := cmd.Process.Signal(syscall.SIGTERM)
-			if sigErr != nil {
-				return sigErr
+			err = cmd.Process.Signal(syscall.SIGTERM)
+			if err != nil {
+				break LOOP
 			}
-			processState, waitErr := cmd.Process.Wait()
-			if processState.Exited() {
-				return nil
+			err = <-cmdErr
+			if err != nil {
+				break LOOP
 			}
-			if waitErr != nil {
-				return waitErr
+			cmd, err = startLess(filePath)
+			if err != nil {
+				break LOOP
 			}
-		}
-		cmd = exec.Command("less", "-c", lyricsCache.FilePath())
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		startErr := cmd.Start()
-		if startErr != nil {
-			return startErr
+			go waitCmd(cmd, cmdErr)
+		case err = <-cmdErr:
+			break LOOP
 		}
 	}
+
+	return err
+}
+
+func saveLyrics(client *http.Client, cacheDir string, si *songinfo.SongInfo) (string, error) {
+	lyricsCache := cache.New(cacheDir, si)
+	if lyricsCache.Exists() {
+		return lyricsCache.FilePath(), nil
+	}
+
+	lyrics, err := fetchLyrics(client, si)
+	if err != nil {
+		return "", err
+	}
+	lyrics = prepareLyrics(si, lyrics)
+	err = lyricsCache.Store(lyrics)
+	if err != nil {
+		return "", err
+	}
+
+	return lyricsCache.FilePath(), nil
+}
+
+func startLess(filePath string) (*exec.Cmd, error) {
+	cmd := exec.Command("less", "-c", filePath)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Start()
+	return cmd, err
+}
+
+func waitCmd(cmd *exec.Cmd, res chan<- error) {
+	state, err := cmd.Process.Wait()
+	if state.Exited() {
+		res <- nil
+		return
+	}
+	if err != nil {
+		res <- err
+		return
+	}
+	res <- nil
 }
 
 var parensRe = regexp.MustCompile(`\(.+\)$`)

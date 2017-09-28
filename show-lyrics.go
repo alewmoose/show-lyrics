@@ -120,7 +120,7 @@ func saveLyrics(client *http.Client, cacheDir string, si *songinfo.SongInfo) (st
 }
 
 func startLess(filePath string) (*exec.Cmd, error) {
-	cmd := exec.Command("less", "-c", filePath)
+	cmd := exec.Command("less", "-c", "-K", filePath)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

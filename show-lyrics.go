@@ -79,7 +79,7 @@ LOOP:
 			if err != nil {
 				break LOOP
 			}
-			err = cmd.Process.Signal(syscall.SIGTERM)
+			err = cmd.Process.Signal(syscall.SIGINT)
 			if err != nil {
 				break LOOP
 			}

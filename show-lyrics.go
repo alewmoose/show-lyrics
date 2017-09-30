@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path"
 	"regexp"
 	"syscall"
@@ -42,6 +43,8 @@ func main() {
 }
 
 func mainLoop(client *http.Client, cacheDir string) error {
+	signal.Ignore(syscall.SIGINT)
+
 	songInfo, err := getSongInfo()
 	if err != nil {
 		return err

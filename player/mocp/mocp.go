@@ -21,7 +21,7 @@ func GetSongInfo() (*songinfo.SongInfo, error) {
 
 // TODO: error
 func getStats() ([]byte, error) {
-	cmd := exec.Command("mocp", "-i")
+	cmd := exec.Command("mocp", "--info")
 	return cmd.Output()
 }
 

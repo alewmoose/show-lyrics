@@ -26,6 +26,7 @@ func main() {
 
 	dotDir := path.Join(home, ".show-lyrics")
 	cacheDir := path.Join(dotDir, "cache")
+	lockFile := path.Join(dotDir, "lockfile")
 
 	for _, dir := range []string{dotDir, cacheDir} {
 		err := mkdirUnlessExists(dir)
@@ -34,12 +35,31 @@ func main() {
 		}
 	}
 
+	flockErr := tryFlock(lockFile)
+	if flockErr != nil {
+		log.Fatalf("Failed to obtain a lock: %s", flockErr)
+	}
+
 	client := &http.Client{}
 
 	err := mainLoop(client, cacheDir)
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func tryFlock(lockFile string) error {
+	f, openErr := os.OpenFile(lockFile, os.O_CREATE, 0644)
+	if openErr != nil {
+		return openErr
+	}
+
+	flockErr := syscall.Flock(int(f.Fd()), syscall.LOCK_EX | syscall.LOCK_NB)
+	if flockErr != nil {
+		return flockErr
+	}
+
+	return nil
 }
 
 func mainLoop(client *http.Client, cacheDir string) error {

@@ -70,8 +70,8 @@ var tests = [...]test{
 }
 
 func TestFetch(t *testing.T) {
+	const fmt = "Failed test #%d:\ngot:\n\"%s\"\nexpected:\n\"%s\"\n"
 	client := &http.Client{}
-	fmt := "Failed test #%d:\ngot:\n\"%s\"\nexpected:\n\"%s\"\n"
 
 	for i, fetchTest := range tests {
 		text, err := Fetch(client, &fetchTest.si)

@@ -55,7 +55,7 @@ func tryFlock(lockFile string) error {
 		return openErr
 	}
 
-	flockErr := syscall.Flock(int(f.Fd()), syscall.LOCK_EX | syscall.LOCK_NB)
+	flockErr := syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
 	if flockErr != nil {
 		return flockErr
 	}

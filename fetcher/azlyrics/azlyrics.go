@@ -47,12 +47,12 @@ func Fetch(client *http.Client, si *songinfo.SongInfo) ([]byte, error) {
 	return lyrics, nil
 }
 
+var articleRe = regexp.MustCompile(`(?i)^(?:the|an?) `)
+var weirdRe = regexp.MustCompile(`(?i)[^a-z0-9]`)
+
 func makeURL(si *songinfo.SongInfo) string {
 	artist := []byte(si.Artist)
 	title := []byte(si.Title)
-
-	articleRe := regexp.MustCompile(`(?i)^(?:the|an?) `)
-	weirdRe := regexp.MustCompile(`(?i)[^a-z0-9]`)
 
 	artist = articleRe.ReplaceAll(artist, []byte{})
 

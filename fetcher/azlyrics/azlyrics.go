@@ -51,10 +51,10 @@ func makeURL(si *songinfo.SongInfo) string {
 	artist := []byte(si.Artist)
 	title := []byte(si.Title)
 
-	theRe := regexp.MustCompile(`(?i)^the `)
+	articleRe := regexp.MustCompile(`(?i)^(?:the|an?) `)
 	weirdRe := regexp.MustCompile(`(?i)[^a-z0-9]`)
 
-	artist = theRe.ReplaceAll(artist, []byte{})
+	artist = articleRe.ReplaceAll(artist, []byte{})
 
 	artist = bytes.ToLower(artist)
 	title = bytes.ToLower(title)

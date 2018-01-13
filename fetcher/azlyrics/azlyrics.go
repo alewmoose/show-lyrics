@@ -5,10 +5,13 @@ import (
 	"errors"
 	"github.com/alewmoose/show-lyrics/songinfo"
 	"golang.org/x/net/html/charset"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
 	"html"
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"unicode"
 )
 
 func Fetch(client *http.Client, si *songinfo.SongInfo) ([]byte, error) {
@@ -50,6 +53,17 @@ func Fetch(client *http.Client, si *songinfo.SongInfo) ([]byte, error) {
 var articleRe = regexp.MustCompile(`(?i)^(?:the|an?) `)
 var weirdRe = regexp.MustCompile(`(?i)[^a-z0-9]`)
 
+func isMn(r rune) bool {
+	return unicode.Is(unicode.Mn, r) // Mn: nonspacing marks
+}
+
+var tranformChain = transform.Chain(norm.NFD, transform.RemoveFunc(isMn), norm.NFC)
+
+func normalizeUnicodeChars(s []byte) []byte {
+	transformed, _, _ := transform.Bytes(tranformChain, s)
+	return transformed
+}
+
 func makeURL(si *songinfo.SongInfo) string {
 	artist := []byte(si.Artist)
 	title := []byte(si.Title)
@@ -57,6 +71,7 @@ func makeURL(si *songinfo.SongInfo) string {
 	artist = articleRe.ReplaceAll(artist, []byte{})
 
 	for _, str := range []*[]byte{&artist, &title} {
+		*str = normalizeUnicodeChars(*str)
 		*str = bytes.ToLower(*str)
 		*str = weirdRe.ReplaceAll(*str, []byte{})
 	}

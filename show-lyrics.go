@@ -3,7 +3,8 @@ package main
 import (
 	"errors"
 	"github.com/alewmoose/show-lyrics/cache"
-	"github.com/alewmoose/show-lyrics/fetcher/azlyrics"
+	// "github.com/alewmoose/show-lyrics/fetcher/azlyrics"
+	"github.com/alewmoose/show-lyrics/fetcher/lyrics_wikia"
 	"github.com/alewmoose/show-lyrics/player/cmus"
 	"github.com/alewmoose/show-lyrics/player/mocp"
 	"github.com/alewmoose/show-lyrics/songinfo"
@@ -168,7 +169,8 @@ func waitCmd(cmd *exec.Cmd, res chan<- error) {
 var parensRe = regexp.MustCompile(`\(.+\)$`)
 
 func fetchLyrics(c *http.Client, si *songinfo.SongInfo) ([]byte, error) {
-	lyrics, err := azlyrics.Fetch(c, si)
+	// lyrics, err := azlyrics.Fetch(c, si)
+	lyrics, err := lyrics_wikia.Fetch(c, si)
 	if err == nil {
 		return lyrics, err
 	}

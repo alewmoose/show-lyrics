@@ -82,11 +82,11 @@ func makeURL(si *songinfo.SongInfo) string {
 	return url
 }
 
-func htmlStrip(h []byte) []byte {
-	commentsRe := regexp.MustCompile(`(?s)<!--.*?-->`)
-	brRe := regexp.MustCompile(`<br/?>`)
-	tagsRe := regexp.MustCompile(`<[^<>]+>`)
+var commentsRe = regexp.MustCompile(`(?s)<!--.*?-->`)
+var brRe = regexp.MustCompile(`<br/?>`)
+var tagsRe = regexp.MustCompile(`<[^<>]+>`)
 
+func htmlStrip(h []byte) []byte {
 	h = commentsRe.ReplaceAll(h, []byte{})
 	h = brRe.ReplaceAll(h, []byte{})
 	h = tagsRe.ReplaceAll(h, []byte{})
@@ -96,14 +96,14 @@ func htmlStrip(h []byte) []byte {
 	return h
 }
 
-func parseLyrics(lyricsHtml []byte) ([]byte, error) {
-	re := regexp.MustCompile(
-		`(?s)<div[^<>]*?class="lyricsh"[^<>]*?>.*?</div>\s*?` +
-			`<div[^<>]*?>.*?</div>\s*` +
-			`.*?` +
-			`<div[^<>]*?>(.*?)</div>`)
+var parseLyricsRe = regexp.MustCompile(
+	`(?s)<div[^<>]*?class="lyricsh"[^<>]*?>.*?</div>\s*?` +
+		`<div[^<>]*?>.*?</div>\s*` +
+		`.*?` +
+		`<div[^<>]*?>(.*?)</div>`)
 
-	match := re.FindAllSubmatch(lyricsHtml, 1)
+func parseLyrics(lyricsHtml []byte) ([]byte, error) {
+	match := parseLyricsRe.FindAllSubmatch(lyricsHtml, 1)
 	if match == nil {
 		return []byte{}, errors.New("Failed to parse html")
 	}

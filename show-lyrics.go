@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"github.com/alewmoose/show-lyrics/cache"
-	// "github.com/alewmoose/show-lyrics/fetcher/azlyrics"
+	"github.com/alewmoose/show-lyrics/fetcher/azlyrics"
 	"github.com/alewmoose/show-lyrics/fetcher/lyrics_wikia"
 	"github.com/alewmoose/show-lyrics/player/cmus"
 	"github.com/alewmoose/show-lyrics/player/mocp"
@@ -168,24 +168,36 @@ func waitCmd(cmd *exec.Cmd, res chan<- error) {
 
 var parensRe = regexp.MustCompile(`\(.+\)$`)
 
+var lyricsFetchers = [...]func(*http.Client, *songinfo.SongInfo) ([]byte, error){
+	azlyrics.Fetch,
+	lyrics_wikia.Fetch,
+}
+var lfi = 0
+
 func fetchLyrics(c *http.Client, si *songinfo.SongInfo) ([]byte, error) {
-	// lyrics, err := azlyrics.Fetch(c, si)
-	lyrics, err := lyrics_wikia.Fetch(c, si)
-	if err == nil {
-		return lyrics, err
+	for n := 0; n < len(lyricsFetchers); n++ {
+		fetcher := lyricsFetchers[lfi]
+		lfi = (lfi + 1) % len(lyricsFetchers)
+
+		lyrics, err := fetcher(c, si)
+		if err == nil {
+			return lyrics, err
+		}
+		if err.Error() != "404 Not Found" {
+			return lyrics, err
+		}
+
+		if parensRe.MatchString(si.Title) == false {
+			return lyrics, err
+		}
+		title := parensRe.ReplaceAllString(si.Title, "")
+		if len(title) == 0 {
+			return lyrics, err
+		}
+		newSi := songinfo.SongInfo{Artist: si.Artist, Title: title}
+		return fetchLyrics(c, &newSi)
 	}
-	if err.Error() != "404 Not Found" {
-		return lyrics, err
-	}
-	if parensRe.MatchString(si.Title) == false {
-		return lyrics, err
-	}
-	title := parensRe.ReplaceAllString(si.Title, "")
-	if len(title) == 0 {
-		return lyrics, err
-	}
-	newSi := songinfo.SongInfo{Artist: si.Artist, Title: title}
-	return fetchLyrics(c, &newSi)
+	return nil, errors.New("Lyrics not found")
 }
 
 var SIGetters = [...]func() (*songinfo.SongInfo, error){

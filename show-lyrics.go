@@ -40,7 +40,7 @@ func main() {
 	if flockErr != nil {
 		log.Fatalf("Failed to obtain a lock: %s", flockErr)
 	}
-	defer os.Remove(lockFile)
+	defer func() { _ = os.Remove(lockFile) }()
 
 	client := &http.Client{}
 
